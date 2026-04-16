@@ -146,6 +146,38 @@ class AbstractViewerItem(QGraphicsItem):
         r = self.pageGetRotation(idx)
         return [ adjustForOrientation(cv) for cv in crop_values ]
 
+class MuPDFViewerItem(AbstractViewerItem):
+    """Viewer implementation which uses PyMuPDF to display PDF documents."""
+    def reset(self):
+        AbstractViewerItem.reset(self)
+        self._pdfdoc = None
+
+    def doLoad(self, filename):
+        self._pdfdoc = fitz.open(filename)
+        # if self._pdfdoc:
+        #     self._pdfdoc.setRenderHint(Poppler.Document.Antialiasing and
+        #             Poppler.Document.TextAntialiasing)
+
+    def numPages(self):
+        if self._pdfdoc is None:
+            return 0
+        else:
+            return len(self._pdfdoc)
+
+    def cacheImage(self, idx):
+        page = self._pdfdoc[idx]
+        pix = page.get_pixmap(alpha=False, dpi=96) # default dpi is 72
+        return QImage(pix.samples, pix.width, pix.height, pix.stride, QImage.Format.Format_RGB888)
+        # It might be faster to use samples_ptr but the code results in crashes.
+        # https://pymupdf.readthedocs.io/en/latest/tutorial.html
+        # pix = page.get_pixmap()
+        # set the correct QImage format depending on alpha
+        # fmt = QImage.Format_RGBA8888 if pix.alpha else QImage.Format.Format_RGB888
+        # return QImage(pix.samples_ptr, pix.width, pix.height, fmt)
+
+    def pageGetRotation(self, idx):
+        page = self._pdfdoc[idx]
+        return page.rotation
 
 class PopplerViewerItem(AbstractViewerItem):
     """Viewer implementation which uses Poppler to display PDF documents."""
@@ -181,40 +213,6 @@ class PopplerViewerItem(AbstractViewerItem):
             return 270
         else: # o == page.Portrait
             return 0
-
-
-class MuPDFViewerItem(AbstractViewerItem):
-    """Viewer implementation which uses PyMuPDF to display PDF documents."""
-    def reset(self):
-        AbstractViewerItem.reset(self)
-        self._pdfdoc = None
-
-    def doLoad(self, filename):
-        self._pdfdoc = fitz.open(filename)
-        # if self._pdfdoc:
-        #     self._pdfdoc.setRenderHint(Poppler.Document.Antialiasing and
-        #             Poppler.Document.TextAntialiasing)
-
-    def numPages(self):
-        if self._pdfdoc is None:    
-            return 0
-        else:
-            return len(self._pdfdoc)
-
-    def cacheImage(self, idx):        
-        page = self._pdfdoc[idx]
-        pix = page.get_pixmap(alpha=False, dpi=96) # default dpi is 72
-        return QImage(pix.samples, pix.width, pix.height, pix.stride, QImage.Format.Format_RGB888)
-        # It might be faster to use samples_ptr but the code results in crashes.
-        # https://pymupdf.readthedocs.io/en/latest/tutorial.html
-        # pix = page.get_pixmap()
-        # set the correct QImage format depending on alpha
-        # fmt = QImage.Format_RGBA8888 if pix.alpha else QImage.Format.Format_RGB888
-        # return QImage(pix.samples_ptr, pix.width, pix.height, fmt)
-
-    def pageGetRotation(self, idx):        
-        page = self._pdfdoc[idx]
-        return page.rotation
 
 
 # determine whether to use PopplerQt or PyMuPDF for rendering

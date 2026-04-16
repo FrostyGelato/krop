@@ -381,10 +381,11 @@ class MainWindow(QMainWindow):
     def slotKrop(self):
         # file names
         inputFileName = self.fileName
-        outputFileName = self.output_timestamped_name()
+        # outputFileName = self.output_timestamped_name()
+        outputFileName = "/Users/number/Code/Python/Compustat/Experimental/original/output.png"
 
         # only crop the current page
-        currentPageIndex = self.viewer.getCurrentPageIndex
+        currentPageIndex = self.viewer.getCurrentPageIndex()
 
         rotation = [0, 270, 90, 180][self.ui.comboRotation.currentIndex()]
 

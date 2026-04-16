@@ -15,6 +15,7 @@ the Free Software Foundation; either version 3 of the License, or
 
 import copy
 import sys
+import pymupdf
 
 from krop.config import PYQT6
 
@@ -128,26 +129,29 @@ class PyMuPdfImageExtractor(SemiAbstractPdfCropper):
 
     def addPageCropped(self, pdffile, pagenumber, croplist, rotate=0):
         """
-        Takes a pdffile (expected to have a .reader attribute which is a fitz.Document),
-        extracts the specific page, applies the crop, and stores the image.
+        Extracts the image from the page, applies the crop, and rotates if necessary.
         """
-        # Get the specific page from the PyMuPDF document
+        # pdffile.reader is assumed to be a fitz.Document
         page = pdffile.reader.load_page(pagenumber)
 
-        # Determine the crop area
+        # Default to the full page rect if no crop is provided
+        crop_rect = page.rect
+
         if croplist:
-            # For a single image output, we take the first crop defined
+            # Take the first crop definition from the list
             crop = croplist[0]
-            current_box = self.pageGetCropBox(page)
+            # computeCropBoxCoords should return a fitz.Rect or a tuple (x0, y0, x1, y1)
+            crop_rect = computeCropBoxCoords(page.rect, crop, pdf_coords=False)
 
-            # Using your existing logic for coordinate calculation
-            # Note: computeCropBoxCoords must be defined in your scope
-            new_box = computeCropBoxCoords(current_box, crop, pdf_coords=False)
-            self.pageSetCropBox(page, new_box)
+        zoom = 4
+        mat = pymupdf.Matrix(zoom, zoom).prerotate(rotate)
+        pix = page.get_pixmap(
+            matrix=mat,
+            clip=crop_rect,
+            colorspace=pymupdf.csRGB,
+            alpha=False
+        )
 
-        # Render the page to an image (Pixmap)
-        # alpha=False ensures a white background instead of transparency
-        pix = page.get_pixmap(matrix=self.pymupdf.Matrix(1, 1), colorspace=self.pymupdf.csRGB, alpha=False)
         self.image_result = pix
 
     def pageGetCropBox(self, page):
