@@ -16,6 +16,7 @@ the Free Software Foundation; either version 3 of the License, or
 import sys
 from os.path import exists, splitext
 from shutil import which
+from datetime import datetime
 
 from krop.qt import *
 from krop.config import PYQT6
@@ -27,7 +28,7 @@ else:
 
 from krop.viewerselections import ViewerSelections, aspectRatioFromStr
 from krop.vieweritem import ViewerItem
-from krop.pdfcropper import PdfFile, PdfCropper, PdfEncryptedError, optimizePdfGhostscript
+from krop.pdfcropper import PdfFile, PyMuPdfImageExtractor, PdfEncryptedError, optimizePdfGhostscript
 from krop.autotrim import autoTrimMargins
 
 
@@ -372,37 +373,29 @@ class MainWindow(QMainWindow):
                 pages.extend(range(int(a)-1,int(b))) # subtract 1 because pages are counted from 0 internally
         return pages
 
+    def output_timestamped_name(self):
+        now = datetime.now()
+        dt_string = now.strftime("%Y-%m-%d %H:%M:%S")
+        return f"Image {dt_string}"
+
     def slotKrop(self):
         # file names
         inputFileName = self.fileName
-        outputFileName = self.ui.editFile.text()
+        outputFileName = self.output_timestamped_name()
 
-        # which pages
-        s = self.ui.editWhichPages.text()
-        if not s:
-            pages = range(self.viewer.numPages())
-        else:
-            pages = self.str2pages(s)
-
-        alwaysinclude = self.ui.checkIncludePagesWithoutSelections.isChecked()
+        # only crop the current page
+        currentPageIndex = self.viewer.getCurrentPageIndex
 
         rotation = [0, 270, 90, 180][self.ui.comboRotation.currentIndex()]
-
-        # Done when selecting filename.
-        # if exists(outputFileName):
-        #     self.showWarning(self.tr("Overwrite File?"),
-        #             self.tr("A file named \"...\" already exists. Are you sure you want to overwrite it?"))
-        #     return
 
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             pdf = PdfFile()
             pdf.loadFromFile(inputFileName)
-            cropper = PdfCropper()
+            cropper = PyMuPdfImageExtractor()
             cropper.copyDocumentRoot(pdf)
-            for nr in pages:
-                c = self.viewer.cropValues(nr)
-                cropper.addPageCropped(pdf, nr, c, alwaysinclude, rotation)
+            c = self.viewer.cropValues(currentPageIndex)
+            cropper.addPageCropped(pdf, currentPageIndex, c, rotation)
             if self.ui.checkGhostscript.isChecked():
                 import tempfile, os
                 with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as fp:
@@ -415,6 +408,7 @@ class MainWindow(QMainWindow):
             else:
                 cropper.writeToFile(outputFileName)
             QApplication.restoreOverrideCursor()
+
         except PdfEncryptedError as err:
             QApplication.restoreOverrideCursor()
             self.showWarning(self.tr("PDF is encrypted"),

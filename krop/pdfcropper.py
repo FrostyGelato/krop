@@ -118,6 +118,98 @@ class SemiAbstractPdfCropper(AbstractPdfCropper):
     def pageSetCropBox(self, page, box):
         pass
 
+class PyMuPdfImageExtractor(SemiAbstractPdfCropper):
+    """
+    Implementation of PdfCropper that outputs a single cropped image
+    instead of a PDF document.
+    """
+    def __init__(self):
+        self.image_result = None
+
+    def addPageCropped(self, pdffile, pagenumber, croplist, rotate=0):
+        """
+        Takes a pdffile (expected to have a .reader attribute which is a fitz.Document),
+        extracts the specific page, applies the crop, and stores the image.
+        """
+        # Get the specific page from the PyMuPDF document
+        page = pdffile.reader.load_page(pagenumber)
+
+        # Determine the crop area
+        if croplist:
+            # For a single image output, we take the first crop defined
+            crop = croplist[0]
+            current_box = self.pageGetCropBox(page)
+
+            # Using your existing logic for coordinate calculation
+            # Note: computeCropBoxCoords must be defined in your scope
+            new_box = computeCropBoxCoords(current_box, crop, pdf_coords=False)
+            self.pageSetCropBox(page, new_box)
+
+        # Render the page to an image (Pixmap)
+        # alpha=False ensures a white background instead of transparency
+        pix = page.get_pixmap(matrix=self.pymupdf.Matrix(1, 1), colorspace=self.pymupdf.csRGB, alpha=False)
+        self.image_result = pix
+
+    def pageGetCropBox(self, page):
+        return page.cropbox
+
+    def pageSetCropBox(self, page, box):
+        page.set_cropbox(box)
+
+    def writeToFile(self, filename):
+        """Saves the result as an image file (e.g., .png, .jpg)"""
+        if self.image_result:
+            self.image_result.save(filename)
+        else:
+            raise ValueError("No image has been generated. Call addPageCropped first.")
+
+    def writeToStream(self, stream):
+        """Writes the image bytes to a file-like object"""
+        if self.image_result:
+            stream.write(self.image_result.tobytes())
+        else:
+            raise ValueError("No image has been generated.")
+
+class PyMuPdfCropper(SemiAbstractPdfCropper):
+    """Implementation of PdfCropper using PyMuPDF"""
+    def __init__(self):
+        self.output = self.pymupdf.open()
+    def writeToStream(self, stream):
+        self.output.save(stream)
+    def addPageCropped(self, pdffile, pagenumber, croplist, alwaysinclude, rotate=0):
+        def addPage():
+            # https://pymupdf.readthedocs.io/en/latest/the-basics.html
+            r = pdffile.reader[pagenumber].rotation + rotate
+            self.output.insert_pdf(pdffile.reader, from_page=pagenumber, to_page=pagenumber, rotate=r)
+        if not croplist and alwaysinclude:
+            addPage()
+        else:
+            for crop in croplist:
+                addPage()
+                new_page = self.output[-1]
+                box = self.pageGetCropBox(new_page)
+                # MuPDF uses coordinates where (0,0) is the top-right point, unlike
+                # PDF where (0,0) is the bottom-left.
+                new_box = computeCropBoxCoords(box, crop, pdf_coords=False)
+                self.pageSetCropBox(new_page, new_box)
+                # if rotate != 0:
+                #     self.pageRotateClockwise(new_page, rotate)
+    def pageGetCropBox(self, page):
+        return page.cropbox
+    def pageSetCropBox(self, page, box):
+        page.set_cropbox(box)
+        try:
+            page.set_artbox(page.cropbox)
+            page.set_bleedbox(page.cropbox)
+            # careful: mediabox in MuPDF is an exception and uses PDF coordinates
+            # page.set_mediabox(page.cropbox)
+            page.set_trimbox(page.cropbox)
+        except:
+            # these functions did not exist prior to v1.19.4
+            pass
+    def copyDocumentRoot(self, pdffile):
+        pass
+
 class PyPdfCropper(SemiAbstractPdfCropper):
     """Implementation of PdfCropper using pypdf"""
     def __init__(self):
@@ -169,47 +261,6 @@ class PyPdfOldCropper(PyPdfCropper):
         # Copy the named destinations for links.
         for dest in pdffile.reader.namedDestinations.values():
             self.output.addNamedDestinationObject(dest)
-
-
-class PyMuPdfCropper(SemiAbstractPdfCropper):
-    """Implementation of PdfCropper using PyMuPDF"""
-    def __init__(self):
-        self.output = self.pymupdf.open()
-    def writeToStream(self, stream):
-        self.output.save(stream)
-    def addPageCropped(self, pdffile, pagenumber, croplist, alwaysinclude, rotate=0):
-        def addPage():
-            # https://pymupdf.readthedocs.io/en/latest/the-basics.html
-            r = pdffile.reader[pagenumber].rotation + rotate
-            self.output.insert_pdf(pdffile.reader, from_page=pagenumber, to_page=pagenumber, rotate=r)
-        if not croplist and alwaysinclude:
-            addPage()
-        else:
-            for crop in croplist:
-                addPage()
-                new_page = self.output[-1]
-                box = self.pageGetCropBox(new_page)
-                # MuPDF uses coordinates where (0,0) is the top-right point, unlike
-                # PDF where (0,0) is the bottom-left.
-                new_box = computeCropBoxCoords(box, crop, pdf_coords=False)
-                self.pageSetCropBox(new_page, new_box)
-                # if rotate != 0:
-                #     self.pageRotateClockwise(new_page, rotate)
-    def pageGetCropBox(self, page):
-        return page.cropbox
-    def pageSetCropBox(self, page, box):
-        page.set_cropbox(box)
-        try:
-            page.set_artbox(page.cropbox)
-            page.set_bleedbox(page.cropbox)
-            # careful: mediabox in MuPDF is an exception and uses PDF coordinates
-            # page.set_mediabox(page.cropbox)
-            page.set_trimbox(page.cropbox)
-        except:
-            # these functions did not exist prior to v1.19.4
-            pass
-    def copyDocumentRoot(self, pdffile):
-        pass
 
 
 class PikePdfCropper(SemiAbstractPdfCropper):

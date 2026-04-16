@@ -3,3 +3,5 @@ dist/
 .pybuild/
 MANIFEST
 krop.egg-info/
+/.idea
+.DS_Store
