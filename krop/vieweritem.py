@@ -166,14 +166,22 @@ class MuPDFViewerItem(AbstractViewerItem):
 
     def cacheImage(self, idx):
         page = self._pdfdoc[idx]
-        pix = page.get_pixmap(alpha=False, dpi=96) # default dpi is 72
+        image_list = page.get_images(full=True)
+
+        if not image_list:
+            # Fallback: if no image found, render the empty page
+            pix = page.get_pixmap(dpi=96)
+        else:
+            # Get the first image on the page
+            # image_list[0] = (xref, smask, width, height, bpc, colorspace, ...)
+            xref = image_list[0][0]
+            base_image = self._pdfdoc.extract_image(xref)
+            image_bytes = base_image["image"]
+
+            # Load the raw bytes into QImage
+            return QImage.fromData(image_bytes)
+
         return QImage(pix.samples, pix.width, pix.height, pix.stride, QImage.Format.Format_RGB888)
-        # It might be faster to use samples_ptr but the code results in crashes.
-        # https://pymupdf.readthedocs.io/en/latest/tutorial.html
-        # pix = page.get_pixmap()
-        # set the correct QImage format depending on alpha
-        # fmt = QImage.Format_RGBA8888 if pix.alpha else QImage.Format.Format_RGB888
-        # return QImage(pix.samples_ptr, pix.width, pix.height, fmt)
 
     def pageGetRotation(self, idx):
         page = self._pdfdoc[idx]
