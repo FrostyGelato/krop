@@ -14,9 +14,13 @@ the Free Software Foundation; either version 3 of the License, or
 """
 
 import sys
-from os.path import exists, splitext
+from os.path import exists, splitext, expanduser
 from shutil import which
 from datetime import datetime
+import subprocess
+
+if sys.platform == "win32":
+    import winreg
 
 from krop.qt import *
 from krop.config import PYQT6
@@ -31,6 +35,46 @@ from krop.vieweritem import ViewerItem
 from krop.pdfcropper import PdfFile, PyMuPdfImageExtractor, PdfEncryptedError, optimizePdfGhostscript
 from krop.autotrim import autoTrimMargins
 
+def output_timestamped_name():
+    now = datetime.now()
+    dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
+    return f"Image {dt_string}.png"
+
+def get_screenshot_path():
+    # returns string, not Pathlib
+
+    path = None
+
+    if sys.platform == "win32":
+        # Registry key location for the Screenshots folder GUID
+        sub_key = r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
+        guid = "{b7bede81-df94-4682-a7d8-57a52620b86f}"
+
+        try:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, sub_key, 0, winreg.KEY_READ) as key:
+                # Query the value. Returns a tuple: (value, type)
+                path, _ = winreg.QueryValueEx(key, guid)
+        except FileNotFoundError:
+            path = None
+
+    elif sys.platform == "darwin":
+        try:
+            # Run the defaults read command
+            result = subprocess.run(
+                ["defaults", "read", "com.apple.screencapture", "location"],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            path = result.stdout.strip()
+
+        except subprocess.CalledProcessError:
+            path = "~/Desktop"
+
+    else:
+        raise RuntimeError("Only Mac and Windows are supported.")
+
+    return expanduser(path) if path else None
 
 class AspectRatioType:
     def __init__(self, name, width, height):
@@ -373,16 +417,10 @@ class MainWindow(QMainWindow):
                 pages.extend(range(int(a)-1,int(b))) # subtract 1 because pages are counted from 0 internally
         return pages
 
-    def output_timestamped_name(self):
-        now = datetime.now()
-        dt_string = now.strftime("%Y-%m-%d %H:%M:%S")
-        return f"Image {dt_string}"
-
     def slotKrop(self):
         # file names
         inputFileName = self.fileName
-        # outputFileName = self.output_timestamped_name()
-        outputFileName = "/Users/number/Code/Python/Compustat/Experimental/original/output.png"
+        outputFileName = get_screenshot_path() + "/" + output_timestamped_name()
 
         # only crop the current page
         currentPageIndex = self.viewer.getCurrentPageIndex()
