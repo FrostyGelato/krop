@@ -30,6 +30,8 @@ if PYQT6:
 else:
     from krop.mainwindowui_qt5 import Ui_MainWindow
 
+from PyQt6.QtGui import QDragEnterEvent, QDropEvent
+
 from krop.viewerselections import ViewerSelections, aspectRatioFromStr
 from krop.vieweritem import ViewerItem
 from krop.pdfcropper import PdfFile, PyMuPdfImageExtractor, PdfEncryptedError, optimizePdfGhostscript
@@ -41,7 +43,7 @@ def output_timestamped_name():
     return f"Image {dt_string}.png"
 
 def get_screenshot_path():
-    # returns string, not Pathlib
+    # returns string, not Path
 
     path = None
 
@@ -177,6 +179,8 @@ class MainWindow(QMainWindow):
         self.ui=Ui_MainWindow()
         self.ui.setupUi(self)
 
+        self.setAcceptDrops(True)
+
         # these options are awkwardly named and possibly confusing, so they are
         # not shown by default
         self.ui.labelAllowedChanges.hide()
@@ -285,6 +289,18 @@ class MainWindow(QMainWindow):
         self.ui.documentView.setScene(self.pdfScene)
         self.ui.documentView.setFocus()
 
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event: QDropEvent) -> None:
+        urls = event.mimeData().urls()
+        if urls:
+            file_path = urls[0].toLocalFile()
+            if file_path.lower().endswith('.pdf'):
+                self.openFile(file_path)
 
     @property
     def viewer(self):
