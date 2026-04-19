@@ -34,7 +34,7 @@ from PyQt6.QtGui import QDragEnterEvent, QDropEvent
 
 from krop.viewerselections import ViewerSelections, aspectRatioFromStr
 from krop.vieweritem import ViewerItem
-from krop.pdfcropper import PdfFile, PyMuPdfImageExtractor, PdfEncryptedError, optimizePdfGhostscript
+from krop.pdfcropper import PdfFile, PyMuPdfImageExtractor, PdfEncryptedError
 from krop.autotrim import autoTrimMargins
 
 def output_timestamped_name():
@@ -281,11 +281,6 @@ class MainWindow(QMainWindow):
             self.ui.comboDistributeDevice.addItem(t.name)
         self.ui.comboDistributeDevice.addItem("Custom")
 
-        # disable Ghostscript option if gs is not available
-        if not which('gs'):
-            self.ui.checkGhostscript.setChecked(False)
-            self.ui.checkGhostscript.setEnabled(False)
-
         self.ui.documentView.setScene(self.pdfScene)
         self.ui.documentView.setFocus()
 
@@ -344,7 +339,6 @@ class MainWindow(QMainWindow):
         self.ui.editSensitivity.setText(
                 settings.value("Trim/Sensitivity", "5"))
 
-        self.ui.checkGhostscript.setChecked(settings.value("PDF/Optimize", "gs") == "gs")
         self.ui.checkIncludePagesWithoutSelections.setChecked(
                 settings.value("PDF/IncludePagesWithoutSelections", "") == "true")
 
@@ -367,8 +361,6 @@ class MainWindow(QMainWindow):
         settings.setValue("Trim/Sensitivity",
                 self.ui.editSensitivity.text())
 
-        settings.setValue("PDF/Optimize", "gs" if
-                self.ui.checkGhostscript.isChecked() else "no")
         settings.setValue("PDF/IncludePagesWithoutSelections", "true" if
                 self.ui.checkIncludePagesWithoutSelections.isChecked() else "false")
 
@@ -455,17 +447,7 @@ class MainWindow(QMainWindow):
                 c = self.viewer.cropValues(pageIdx)
                 if c:
                     cropper.addPageCropped(pdf, pageIdx, c, rotation)
-            if self.ui.checkGhostscript.isChecked():
-                import tempfile, os
-                with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as fp:
-                    cropper.writeToStream(fp.file)
-                    # we close the file because it depends on the platform
-                    # whether it can be read a second time while still open
-                    fp.close()
-                    optimizePdfGhostscript(fp.name, outputFileName)
-                    os.remove(fp.name)
-            else:
-                cropper.writeToFile(outputFileName)
+            cropper.writeToFile(outputFileName)
             QApplication.restoreOverrideCursor()
 
         except PdfEncryptedError as err:
