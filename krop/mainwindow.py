@@ -435,7 +435,7 @@ class MainWindow(QMainWindow):
         # only crop the current page
         currentPageIndex = self.viewer.getCurrentPageIndex()
 
-        rotation = [0, 270, 90, 180][self.ui.comboRotation.currentIndex()]
+        rotation = [0, 270, 90, 180][0]
 
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
