@@ -612,10 +612,10 @@ class MainWindow(QMainWindow):
             return
 
         item = self.ui.documentView.itemAt(pos)
-        menuForSelection= False
+        menuForSelection = False
         try:
             self.selections.currentSelection = item.selection
-            menuForSelection= True
+            menuForSelection = True
         except AttributeError:
             pass
         popMenu = QMenu()
@@ -626,7 +626,7 @@ class MainWindow(QMainWindow):
             popMenu.addAction(self.ui.actionTrimMargins)
         else:
             popMenu.addAction(self.ui.actionTrimMarginsAll)
-        popMenu.exec_(self.ui.documentView.mapToGlobal(pos))
+        popMenu.exec(self.ui.documentView.mapToGlobal(pos))
 
     def slotDeleteSelection(self):
         if self.selections.currentSelection is not None:
