@@ -16,6 +16,7 @@ the Free Software Foundation; either version 3 of the License, or
 import copy
 import sys
 import pymupdf
+import os
 
 from krop.config import PYQT6
 
@@ -120,12 +121,8 @@ class SemiAbstractPdfCropper(AbstractPdfCropper):
         pass
 
 class PyMuPdfImageExtractor(SemiAbstractPdfCropper):
-    """
-    Implementation of PdfCropper that outputs a single cropped image
-    instead of a PDF document.
-    """
     def __init__(self):
-        self.image_result = None
+        self.image_results = []
 
     def addPageCropped(self, pdffile, pagenumber, croplist, rotate=0):
         """
@@ -152,7 +149,7 @@ class PyMuPdfImageExtractor(SemiAbstractPdfCropper):
             alpha=False
         )
 
-        self.image_result = pix
+        self.image_results.append(pix)
 
     def pageGetCropBox(self, page):
         return page.cropbox
@@ -160,19 +157,24 @@ class PyMuPdfImageExtractor(SemiAbstractPdfCropper):
     def pageSetCropBox(self, page, box):
         page.set_cropbox(box)
 
-    def writeToFile(self, filename):
-        """Saves the result as an image file (e.g., .png, .jpg)"""
-        if self.image_result:
-            self.image_result.save(filename)
-        else:
-            raise ValueError("No image has been generated. Call addPageCropped first.")
+    def writeToFile(self, base_filename):
+
+        if not self.image_results:
+            raise ValueError("No images have been generated. Call addPageCropped first.")
+
+        name, ext = os.path.splitext(base_filename)
+
+        for i, pix in enumerate(self.image_results):
+            indexed_filename = f"{name}_{i + 1}{ext}"
+            pix.save(indexed_filename)
 
     def writeToStream(self, stream):
         """Writes the image bytes to a file-like object"""
-        if self.image_result:
-            stream.write(self.image_result.tobytes())
-        else:
-            raise ValueError("No image has been generated.")
+        if not self.image_results:
+            raise ValueError("No images have been generated.")
+
+        for pix in self.image_results:
+            stream.write(pix.tobytes())
 
 class PyMuPdfCropper(SemiAbstractPdfCropper):
     """Implementation of PdfCropper using PyMuPDF"""

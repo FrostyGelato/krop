@@ -485,6 +485,8 @@ class MainWindow(QMainWindow):
                     "\n\n{0}").format(err))
             raise err
 
+        self.selections.deleteSelections()
+
     def slotZoomIn(self):
         self.ui.actionFitInView.setChecked(False)
         self.ui.documentView.scale(1.2, 1.2)
