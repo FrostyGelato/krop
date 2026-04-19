@@ -438,6 +438,8 @@ class MainWindow(QMainWindow):
         inputFileName = self.fileName
         outputFileName = get_screenshot_path() + "/" + output_timestamped_name()
 
+        pages = range(self.viewer.numPages())
+
         # only crop the current page
         currentPageIndex = self.viewer.getCurrentPageIndex()
 
@@ -449,8 +451,10 @@ class MainWindow(QMainWindow):
             pdf.loadFromFile(inputFileName)
             cropper = PyMuPdfImageExtractor()
             cropper.copyDocumentRoot(pdf)
-            c = self.viewer.cropValues(currentPageIndex)
-            cropper.addPageCropped(pdf, currentPageIndex, c, rotation)
+            for pageIdx in pages:
+                c = self.viewer.cropValues(pageIdx)
+                if c:
+                    cropper.addPageCropped(pdf, pageIdx, c, rotation)
             if self.ui.checkGhostscript.isChecked():
                 import tempfile, os
                 with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as fp:
