@@ -17,9 +17,10 @@ import copy
 import sys
 import pymupdf
 import os
+import io
+from PIL import Image
 
 from krop.config import PYQT6
-
 
 class PdfEncryptedError(Exception):
     pass
@@ -128,28 +129,48 @@ class PyMuPdfImageExtractor(SemiAbstractPdfCropper):
         """
         Extracts the image from the page, applies the crop, and rotates if necessary.
         """
-        # pdffile.reader is assumed to be a fitz.Document
         page = pdffile.reader.load_page(pagenumber)
+        image_list = page.get_images(full=True)
 
-        # Default to the full page rect if no crop is provided
-        crop_rect = page.rect
+        if not image_list:
+            raise ValueError(f"No images found on page {pagenumber}")
 
-        if croplist:
-            # Take the first crop definition from the list
-            crop = croplist[0]
-            # computeCropBoxCoords should return a fitz.Rect or a tuple (x0, y0, x1, y1)
-            crop_rect = computeCropBoxCoords(page.rect, crop, pdf_coords=False)
+        xref = image_list[0][0]
+        base_image = pdffile.reader.extract_image(xref)
+        image_bytes = base_image["image"]
+        img = Image.open(io.BytesIO(image_bytes))
 
-        zoom = 4
-        mat = pymupdf.Matrix(zoom, zoom).prerotate(rotate)
-        pix = page.get_pixmap(
-            matrix=mat,
-            clip=crop_rect,
-            colorspace=pymupdf.csRGB,
-            alpha=False
-        )
+        # Calculate Scaling Factors
+        pdf_width = page.rect.width
+        pdf_height = page.rect.height
 
-        self.image_results.append(pix)
+        img_width, img_height = img.size
+
+        # Scale factors: How many pixels per PDF point
+        scale_x = img_width / pdf_width
+        scale_y = img_height / pdf_height
+
+        # Handle rotation if specified
+        if rotate != 0:
+            img = img.rotate(-rotate, expand=True)
+
+        # Process the croplist
+        crops_to_process = croplist if croplist else [None]
+
+        for crop in crops_to_process:
+            # computeCropBoxCoords needs to return (left, top, right, bottom)
+            # Ensure the coordinates match the pixel dimensions of the extracted image
+            rect = computeCropBoxCoords(page.rect, crop, pdf_coords=False)
+
+            # Scale coordinates to pixels
+            scaled_crop = (
+                rect[0] * scale_x, # Left
+                rect[1] * scale_y, # Top
+                rect[2] * scale_x, # Right
+                rect[3] * scale_y  # Bottom
+            )
+
+            self.image_results.append(img.crop(scaled_crop))
 
     def pageGetCropBox(self, page):
         return page.cropbox
