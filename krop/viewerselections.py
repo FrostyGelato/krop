@@ -31,7 +31,7 @@ class ViewerSelections(object):
         self._selections = []
         self._currentSelection = None
         self._distributeAspectRatio = None
-        self._selectionMode = ViewerSelections.all
+        self._selectionMode = ViewerSelections.individual
         self._selectionExceptions = [] # list of page numbers which require individual selections
         self.lastPos = None
 
