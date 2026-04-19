@@ -2,8 +2,8 @@
 
 
 a = Analysis(
-    ['__main__.py'],
-    pathex=[],
+    ['krop/__main__.py'],
+    pathex=['krop'],
     binaries=[],
     datas=[],
     hiddenimports=[],

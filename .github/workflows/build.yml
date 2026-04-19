@@ -26,7 +26,7 @@ jobs:
 
       - name: Build with PyInstaller
         run: |
-          pyinstaller --windowed --onefile --name "Krop" __main__.py
+          pyinstaller --windowed --onefile --paths krop --name "Krop" krop/__main__.py
         shell: bash
 
       - name: Upload Artifact
