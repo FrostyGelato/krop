@@ -71,6 +71,27 @@ class Ui_MainWindow(object):
         self.editLastFiscalYear.setObjectName("editLastFiscalYear")
         self.verticalLayout.addWidget(self.editLastFiscalYear)
         self.verticalLayout_4.addWidget(self.groupFiscalYears)
+        self.buttonGenerateYearList = QtWidgets.QPushButton(parent=self.groupFiscalYears)
+        self.buttonGenerateYearList.setObjectName("buttonGenerateYearList")
+        self.buttonGenerateYearList.setText("Generate Year List")
+        self.verticalLayout.addWidget(self.buttonGenerateYearList)
+
+        self.scrollYears = QtWidgets.QScrollArea(parent=self.groupFiscalYears)
+        self.scrollYears.setMinimumSize(QtCore.QSize(0, 150)) # Room for ~10 checkboxes
+        self.scrollYears.setWidgetResizable(True)
+        self.scrollYears.setObjectName("scrollYears")
+
+        self.scrollAreaWidgetContents = QtWidgets.QWidget()
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 150, 150))
+        self.layoutYearList = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
+        self.layoutYearList.setObjectName("layoutYearList")
+
+        self.yearSpacer = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding)
+        self.layoutYearList.addItem(self.yearSpacer)
+
+        self.scrollYears.setWidget(self.scrollAreaWidgetContents)
+        self.verticalLayout.addWidget(self.scrollYears)
+
         self.groupSelectionMode = QtWidgets.QGroupBox(parent=self.tabBasic)
         self.groupSelectionMode.setFlat(False)
         self.groupSelectionMode.setObjectName("groupSelectionMode")
@@ -366,13 +387,14 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        self.groupSaveTo.setTitle(_translate("MainWindow", "Save cropped PDF to"))
+        self.groupSaveTo.setTitle(_translate("MainWindow", "Save screenshot folders to"))
         self.editFile.setToolTip(_translate("MainWindow", "<p>This is where the cropped PDF will be saved after you choose <i>Krop!</i> in the menu.</p>"))
         self.buttonFileSelect.setToolTip(_translate("MainWindow", "<p>This is where the cropped PDF will be saved after you choose <i>Krop!</i> in the menu.</p>"))
         self.scanQualitySelection.setTitle(_translate("MainWindow", "Scan Quality"))
         self.groupFiscalYears.setTitle(_translate("MainWindow", "Select Fiscal Years"))
         self.editFirstFiscalYear.setToolTip(_translate("MainWindow", "Enter the earliest fiscal year shown in both tables"))
         self.editLastFiscalYear.setToolTip(_translate("MainWindow", "Enter the latest fiscal year shown in both tables"))
+        self.buttonGenerateYearList.setText(_translate("MainWindow", "Generate Year List"))
         self.groupSelectionMode.setToolTip(_translate("MainWindow", "<p>Should all pages be cropped based on the same selections? Maybe you want to treat even and odd pages differently? For full control you can crop each page using individual selections.</p>"))
         self.groupSelectionMode.setTitle(_translate("MainWindow", "Selections apply to"))
         self.radioSelAll.setText(_translate("MainWindow", "all pages"))

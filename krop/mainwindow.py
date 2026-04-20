@@ -387,14 +387,15 @@ class MainWindow(QMainWindow):
         self.openFile(fileName)
 
     def slotSelectFile(self):
-        fileName = QFileDialog.getSaveFileName(self,
-                self.tr("Save cropped PDF to ..."), "", self.tr("PDF Files (*.pdf)"))
-                # None, QFileDialog.DontConfirmOverwrite)
-        try:
-            self.ui.editFile.setText(fileName)
-        except TypeError:
-            # new versions of Qt return a tuple (fileName, selectedFilter)
-            self.ui.editFile.setText(fileName[0])
+        dirPath = QFileDialog.getExistingDirectory(
+            self,
+            self.tr("Select Folder to Save Screenshots"),
+            "",
+            QFileDialog.Option.ShowDirsOnly
+        )
+
+        if dirPath:
+            self.ui.editFile.setText(dirPath)
 
     def showWarning(self, title, text):
         # if krop is called with parameter --go, then the main window is never
