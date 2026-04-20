@@ -336,6 +336,8 @@ class MainWindow(QMainWindow):
         self.ui.editSensitivity.setText(
                 settings.value("Trim/Sensitivity", "5"))
 
+        self.ui.editInitials.setText(settings.value("Other/Initials", ""))
+
         self.selAspectRatioTypes.loadTypes(settings)
         self.deviceTypes.loadTypes(settings)
 
@@ -354,6 +356,8 @@ class MainWindow(QMainWindow):
                 self.ui.editAllowedChanges.text())
         settings.setValue("Trim/Sensitivity",
                 self.ui.editSensitivity.text())
+
+        settings.setValue("Other/Initials", self.ui.editInitials.text())
 
         self.selAspectRatioTypes.saveTypes(settings)
         self.deviceTypes.saveTypes(settings)
