@@ -91,7 +91,7 @@ def main():
         elif args.selections == "individual":
             window.ui.radioSelIndividual.setChecked(True)
     if args.exceptions is not None:
-        window.ui.editSelExceptions.setText(args.exceptions)
+        window.ui.editInitials.setText(args.exceptions)
         window.slotSelExceptionsChanged()
     if args.initialpage is not None:
         window.ui.editCurrentPage.setText(args.initialpage)

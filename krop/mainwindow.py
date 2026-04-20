@@ -255,11 +255,8 @@ class MainWindow(QMainWindow):
         self.ui.actionTrimMarginsAll.triggered.connect(self.slotTrimMarginsAll)
         self.ui.documentView.customContextMenuRequested.connect(self.slotContextMenu)
         self.ui.editCurrentPage.textEdited.connect(self.slotCurrentPageEdited)
-        self.ui.radioSelAll.toggled.connect(self.slotSelectionMode)
-        self.ui.radioSelEvenOdd.toggled.connect(self.slotSelectionMode)
-        self.ui.radioSelIndividual.toggled.connect(self.slotSelectionMode)
         #  self.ui.editSelExceptions.editingFinished.connect(self.slotSelExceptionsChanged)
-        self.ui.editSelExceptions.textEdited.connect(self.slotSelExceptionsEdited)
+        self.ui.editInitials.textEdited.connect(self.slotSelExceptionsEdited)
         self.ui.comboSelAspectRatioType.currentIndexChanged.connect(self.slotSelAspectRatioTypeChanged)
         self.ui.editSelAspectRatio.editingFinished.connect(self.slotSelAspectRatioChanged)
         self.ui.comboDistributeDevice.currentIndexChanged.connect(self.slotDeviceTypeChanged)
@@ -517,20 +514,8 @@ class MainWindow(QMainWindow):
         self.ui.editCurrentPage.setText(cur)
         self.ui.editMaxPage.setText(num)
 
-    def slotSelectionMode(self, checked):
-        if checked:
-            enableExceptions = True
-            if self.ui.radioSelAll.isChecked():
-                self.selections.selectionMode = ViewerSelections.all
-            elif self.ui.radioSelEvenOdd.isChecked():
-                self.selections.selectionMode = ViewerSelections.evenodd
-            elif self.ui.radioSelIndividual.isChecked():
-                enableExceptions = False
-                self.selections.selectionMode = ViewerSelections.individual
-            self.ui.editSelExceptions.setEnabled(enableExceptions)
-
     def slotSelExceptionsChanged(self):
-        s = self.ui.editSelExceptions.text()
+        s = self.ui.editInitials.text()
         pages = self.str2pages(s)
         self.selections.selectionExceptions = pages
 
