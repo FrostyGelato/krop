@@ -339,9 +339,6 @@ class MainWindow(QMainWindow):
         self.ui.editSensitivity.setText(
                 settings.value("Trim/Sensitivity", "5"))
 
-        self.ui.checkIncludePagesWithoutSelections.setChecked(
-                settings.value("PDF/IncludePagesWithoutSelections", "") == "true")
-
         self.selAspectRatioTypes.loadTypes(settings)
         self.deviceTypes.loadTypes(settings)
 
@@ -360,9 +357,6 @@ class MainWindow(QMainWindow):
                 self.ui.editAllowedChanges.text())
         settings.setValue("Trim/Sensitivity",
                 self.ui.editSensitivity.text())
-
-        settings.setValue("PDF/IncludePagesWithoutSelections", "true" if
-                self.ui.checkIncludePagesWithoutSelections.isChecked() else "false")
 
         self.selAspectRatioTypes.saveTypes(settings)
         self.deviceTypes.saveTypes(settings)

@@ -8,7 +8,6 @@
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 
-
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -59,18 +58,19 @@ class Ui_MainWindow(object):
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         self.verticalLayout_4.addWidget(self.scanQualitySelection)
-        self.groupWhichPages = QtWidgets.QGroupBox(parent=self.tabBasic)
-        self.groupWhichPages.setObjectName("groupWhichPages")
-        self.verticalLayout = QtWidgets.QVBoxLayout(self.groupWhichPages)
+        self.groupFiscalYears = QtWidgets.QGroupBox(parent=self.tabBasic)
+        self.groupFiscalYears.setObjectName("groupFiscalYears")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.groupFiscalYears)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.editWhichPages = QtWidgets.QLineEdit(parent=self.groupWhichPages)
-        self.editWhichPages.setObjectName("editWhichPages")
-        self.verticalLayout.addWidget(self.editWhichPages)
-        self.checkIncludePagesWithoutSelections = QtWidgets.QCheckBox(parent=self.groupWhichPages)
-        self.checkIncludePagesWithoutSelections.setChecked(True)
-        self.checkIncludePagesWithoutSelections.setObjectName("checkIncludePagesWithoutSelections")
-        self.verticalLayout.addWidget(self.checkIncludePagesWithoutSelections)
-        self.verticalLayout_4.addWidget(self.groupWhichPages)
+        self.editFirstFiscalYear = QtWidgets.QSpinBox(parent=self.groupFiscalYears)
+        self.editFirstFiscalYear.setRange(1900, 2000)
+        self.editFirstFiscalYear.setObjectName("editFirstFiscalYear")
+        self.verticalLayout.addWidget(self.editFirstFiscalYear)
+        self.editLastFiscalYear = QtWidgets.QSpinBox(parent=self.groupFiscalYears)
+        self.editLastFiscalYear.setRange(1900, 2000)
+        self.editLastFiscalYear.setObjectName("editLastFiscalYear")
+        self.verticalLayout.addWidget(self.editLastFiscalYear)
+        self.verticalLayout_4.addWidget(self.groupFiscalYears)
         self.groupSelectionMode = QtWidgets.QGroupBox(parent=self.tabBasic)
         self.groupSelectionMode.setFlat(False)
         self.groupSelectionMode.setObjectName("groupSelectionMode")
@@ -370,16 +370,9 @@ class Ui_MainWindow(object):
         self.editFile.setToolTip(_translate("MainWindow", "<p>This is where the cropped PDF will be saved after you choose <i>Krop!</i> in the menu.</p>"))
         self.buttonFileSelect.setToolTip(_translate("MainWindow", "<p>This is where the cropped PDF will be saved after you choose <i>Krop!</i> in the menu.</p>"))
         self.scanQualitySelection.setTitle(_translate("MainWindow", "Scan Quality"))
-        # self.comboRotation.setItemText(0, _translate("MainWindow", "don\'t rotate"))
-        # self.comboRotation.setItemText(1, _translate("MainWindow", "rotate left (90° counterclockwise)"))
-        # self.comboRotation.setItemText(2, _translate("MainWindow", "rotate right (90° clockwise)"))
-        # self.comboRotation.setItemText(3, _translate("MainWindow", "upside down"))
-        self.groupWhichPages.setTitle(_translate("MainWindow", "Which pages to include"))
-        self.editWhichPages.setToolTip(_translate("MainWindow", "<p>Which pages to include in the output file.</p><p><i>Eg:</i> 1-5 for the first 5 pages\n"
-"<br><i>Eg:</i> 2- for all but the first page\n"
-"<br><i>Eg:</i> 1,4-5,7- to omit pages 2,3,6</p>"))
-        self.checkIncludePagesWithoutSelections.setToolTip(_translate("MainWindow", "<p>If checked, pages without selections will be included in the output unchanged. Otherwise, such pages will be removed from the output.</p>"))
-        self.checkIncludePagesWithoutSelections.setText(_translate("MainWindow", "Include pages without selections"))
+        self.groupFiscalYears.setTitle(_translate("MainWindow", "Select Fiscal Years"))
+        self.editFirstFiscalYear.setToolTip(_translate("MainWindow", "Enter the earliest fiscal year shown in both tables"))
+        self.editLastFiscalYear.setToolTip(_translate("MainWindow", "Enter the latest fiscal year shown in both tables"))
         self.groupSelectionMode.setToolTip(_translate("MainWindow", "<p>Should all pages be cropped based on the same selections? Maybe you want to treat even and odd pages differently? For full control you can crop each page using individual selections.</p>"))
         self.groupSelectionMode.setTitle(_translate("MainWindow", "Selections apply to"))
         self.radioSelAll.setText(_translate("MainWindow", "all pages"))

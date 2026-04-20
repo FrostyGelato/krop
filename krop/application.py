@@ -80,7 +80,7 @@ def main():
     if args.output is not None:
         window.ui.editFile.setText(args.output)
     if args.whichpages is not None:
-        window.ui.editWhichPages.setText(args.whichpages)
+        window.ui.editFirstFiscalYear.setText(args.whichpages)
     if args.optimize is not None:
         window.ui.checkGhostscript.setChecked(args.optimize == "gs")
     if args.selections is not None:
