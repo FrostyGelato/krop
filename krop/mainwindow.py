@@ -24,6 +24,7 @@ if sys.platform == "win32":
 
 from krop.qt import *
 from krop.config import PYQT6
+from pathlib import Path
 
 if PYQT6:
     from krop.mainwindowui_qt6 import Ui_MainWindow
@@ -41,42 +42,6 @@ def output_timestamped_name():
     now = datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
     return f"Image {dt_string}.png"
-
-def get_screenshot_path():
-    # returns string, not Path
-
-    path = None
-
-    if sys.platform == "win32":
-        # Registry key location for the Screenshots folder GUID
-        sub_key = r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
-        guid = "{b7bede81-df94-4682-a7d8-57a52620b86f}"
-
-        try:
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, sub_key, 0, winreg.KEY_READ) as key:
-                # Query the value. Returns a tuple: (value, type)
-                path, _ = winreg.QueryValueEx(key, guid)
-        except FileNotFoundError:
-            path = None
-
-    elif sys.platform == "darwin":
-        try:
-            # Run the defaults read command
-            result = subprocess.run(
-                ["defaults", "read", "com.apple.screencapture", "location"],
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            path = result.stdout.strip()
-
-        except subprocess.CalledProcessError:
-            path = "~/Desktop"
-
-    else:
-        raise RuntimeError("Only Mac and Windows are supported.")
-
-    return expanduser(path) if path else None
 
 class AspectRatioType:
     def __init__(self, name, width, height):
@@ -369,18 +334,15 @@ class MainWindow(QMainWindow):
             self.viewer.load(fileName)
             if not self.viewer.isEmpty():
                 self.fileName = fileName
-                outputFileName = "%s-cropped.pdf" % splitext(fileName)[0]
                 self.slotFitInView(self.ui.actionFitInView.isChecked())
             else:
                 self.fileName = ''
-                outputFileName = ''
                 self.showWarning(self.tr("Something got in our way"),
                         self.tr("The PDF file couldn't be read. "
                             "Please check the file and its permissions."))
             self.setWindowFilePath(self.fileName)
             self.ui.actionKrop.setEnabled(not self.viewer.isEmpty())
             self.ui.actionTrimMarginsAll.setEnabled(not self.viewer.isEmpty())
-            self.ui.editFile.setText(outputFileName)
             self.updateControls()
 
     def slotOpenFile(self):
@@ -423,15 +385,20 @@ class MainWindow(QMainWindow):
                 pages.extend(range(int(a)-1,int(b))) # subtract 1 because pages are counted from 0 internally
         return pages
 
+    def getScreenshotsPath(self):
+        path = Path(self.ui.editFile.text().strip())
+
+        if path.is_dir():
+            return path
+        return path.parent
+
     def slotKrop(self):
         # file names
         inputFileName = self.fileName
-        outputFileName = get_screenshot_path() + "/" + output_timestamped_name()
+        outputFileName = self.getScreenshotsPath() / Path(self.fileName).stem / output_timestamped_name()
+        outputFileName.parent.mkdir(parents=True, exist_ok=True)
 
         pages = range(self.viewer.numPages())
-
-        # only crop the current page
-        currentPageIndex = self.viewer.getCurrentPageIndex()
 
         rotation = [0, 270, 90, 180][0]
 

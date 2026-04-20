@@ -183,11 +183,19 @@ class PyMuPdfImageExtractor(SemiAbstractPdfCropper):
         if not self.image_results:
             raise ValueError("No images have been generated. Call addPageCropped first.")
 
-        name, ext = os.path.splitext(base_filename)
+        stem = base_filename.stem
+        suffix = base_filename.suffix
+        directory = base_filename.parent
 
         for i, pix in enumerate(self.image_results):
-            indexed_filename = f"{name}_{i + 1}{ext}"
-            pix.save(indexed_filename)
+            # Create a new filename using f-string logic
+            new_name = f"{stem}_{i + 1}{suffix}"
+
+            # Combine the original directory with the new filename
+            indexed_filename = directory / new_name
+
+            # Convert Path object to string if the save method requires it
+            pix.save(str(indexed_filename))
 
     def writeToStream(self, stream):
         """Writes the image bytes to a file-like object"""
