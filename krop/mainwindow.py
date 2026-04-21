@@ -14,13 +14,7 @@ the Free Software Foundation; either version 3 of the License, or
 """
 
 import sys
-from os.path import exists, splitext, expanduser
-from shutil import which
 from datetime import datetime
-import subprocess
-
-if sys.platform == "win32":
-    import winreg
 
 from krop.qt import *
 from krop.config import PYQT6
@@ -32,11 +26,29 @@ else:
     from krop.mainwindowui_qt5 import Ui_MainWindow
 
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent
+from PyQt6.QtWidgets import QMessageBox, QCheckBox
 
 from krop.viewerselections import ViewerSelections, aspectRatioFromStr
 from krop.vieweritem import ViewerItem
 from krop.pdfcropper import PdfFile, PyMuPdfImageExtractor, PdfEncryptedError
 from krop.autotrim import autoTrimMargins
+
+years_list_path = Path("years_list.txt")
+
+def add_year_to_list(years: list[str]):
+    years_list_path.touch(exist_ok=True)
+
+    with years_list_path.open(mode="a", encoding="utf-8") as f:
+        for year in years:
+            f.write(f"{year}\n")
+
+def get_years_list() -> list:
+    if not years_list_path.exists():
+        years_list_path.touch(exist_ok=True)
+        return []
+
+    content = years_list_path.read_text(encoding="utf-8")
+    return sorted({int(y) for y in content.splitlines() if y.strip()})
 
 def output_timestamped_name():
     now = datetime.now()
@@ -227,6 +239,8 @@ class MainWindow(QMainWindow):
         self.ui.comboDistributeDevice.currentIndexChanged.connect(self.slotDeviceTypeChanged)
         self.ui.editDistributeAspectRatio.editingFinished.connect(self.slotDistributeAspectRatioChanged)
         self.ui.splitter.splitterMoved.connect(self.slotSplitterMoved)
+
+        self.ui.buttonGenerateYearList.clicked.connect(self.slotGenerateYearList)
 
         self.pdfScene = QGraphicsScene(self.ui.documentView)
         self.pdfScene.setBackgroundBrush(self.pdfScene.palette().dark())
@@ -437,6 +451,43 @@ class MainWindow(QMainWindow):
             raise err
 
         self.selections.deleteSelections()
+
+    def slotGenerateYearList(self):
+        while self.ui.layoutYearList.count() > 1: # > 1 to keep the spacer at the bottom
+            item = self.ui.layoutYearList.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+
+        self.year_checkboxes = {}
+
+        try:
+            start = self.ui.editFirstFiscalYear.value()
+            end = self.ui.editLastFiscalYear.value()
+
+            if start > end:
+                start, end = end, start
+
+            # Assuming get_years_list() is defined elsewhere in your logic
+            years_list = get_years_list()
+
+            for year in range(start, end + 1):
+                # Create the checkbox
+                chk = QCheckBox(str(year))
+
+                # Set initial state (True if NOT in years_list, matching your Tkinter logic)
+                initial_state = year not in years_list
+                chk.setChecked(initial_state)
+
+                # 3. Add to the layout (inserting above the spacer)
+                self.ui.layoutYearList.insertWidget(self.ui.layoutYearList.count() - 1, chk)
+
+                # Store reference to the checkbox object
+                self.year_checkboxes[year] = chk
+
+        except Exception as e:
+            # PyQt equivalent of messagebox.showerror
+            QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
 
     def slotZoomIn(self):
         self.ui.actionFitInView.setChecked(False)
