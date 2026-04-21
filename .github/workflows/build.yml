@@ -34,3 +34,21 @@ jobs:
         with:
           name: Build-${{ matrix.os }}
           path: dist/
+
+  release:
+    needs: build # Wait for all matrix builds to finish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to create a release and upload assets
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./assets
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./assets/**/Krop-*
+          generate_release_notes: true
