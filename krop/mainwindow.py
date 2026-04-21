@@ -253,6 +253,7 @@ class MainWindow(QMainWindow):
         self.pdfScene.addItem(self.viewer)
 
         self.readSettings()
+        self.refreshYearList()
 
         # populate combobox with aspect ratio types
         for t in self.selAspectRatioTypes:
@@ -388,7 +389,7 @@ class MainWindow(QMainWindow):
             label = QLabel(str(year))
 
             color = "black" if year in years_list else "red"
-            label.setStyleSheet(f"color: {color}; font-family: Arial; font-size: 12pt; background-color: white;")
+            label.setStyleSheet(f"color: {color}; font-family: Arial; font-size: 12pt;")
 
             self.ui.layoutYears.addWidget(label)
 

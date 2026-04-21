@@ -96,8 +96,6 @@ class Ui_MainWindow(object):
         self.editInitials.setObjectName("editInitials")
         self.gridLayout_2.addWidget(self.editInitials, 3, 1, 1, 1)
         self.verticalLayout_4.addWidget(self.groupOtherFields)
-        spacerItem = QtWidgets.QSpacerItem(20, 484, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding)
-        self.verticalLayout_4.addItem(spacerItem)
 
         self.groupYearList = QtWidgets.QGroupBox(parent=self.tabBasic)
         self.groupYearList.setObjectName("groupYearList")
@@ -114,11 +112,9 @@ class Ui_MainWindow(object):
         self.scrollNumbers.setWidget(self.scrollAreaNumbersContents)
         self.verticalLayout_YearList.addWidget(self.scrollNumbers)
 
-        # Reset Button
         self.buttonResetYears = QtWidgets.QPushButton("Reset List", parent=self.groupYearList)
         self.verticalLayout_YearList.addWidget(self.buttonResetYears)
 
-        # Add the entire group to your main layout
         self.verticalLayout_4.addWidget(self.groupYearList)
 
         self.tabWidget.addTab(self.tabBasic, "")
