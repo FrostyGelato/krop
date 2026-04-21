@@ -368,16 +368,14 @@ class MainWindow(QMainWindow):
             self.refreshYearList()
 
     def clearListUI(self):
-        while self.layoutYearList.count():
-            item = self.layoutYearList.takeAt(0)
+        while self.ui.layoutYears.count():
+            item = self.ui.layoutYears.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
 
     def refreshYearList(self):
-        # 1. Clear the previous list
         self.clearListUI()
 
-        # 2. Get your data
         years_list = get_years_list()
         if not years_list:
             return
@@ -386,16 +384,13 @@ class MainWindow(QMainWindow):
         max_year = max(years_list)
         all_years = range(min_year, max_year + 1)
 
-        # 3. Populate the list
         for year in all_years:
             label = QLabel(str(year))
 
-            # Set color: Black for existing, Red for missing (gaps)
             color = "black" if year in years_list else "red"
             label.setStyleSheet(f"color: {color}; font-family: Arial; font-size: 12pt; background-color: white;")
 
-            # Add to the layout
-            self.layoutYearList.addWidget(label)
+            self.ui.layoutYears.addWidget(label)
 
     def slotClearList(self):
         self.clearListUI()
