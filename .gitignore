@@ -5,3 +5,4 @@ MANIFEST
 krop.egg-info/
 /.idea
 .DS_Store
+/years_list.txt

@@ -15,6 +15,7 @@ the Free Software Foundation; either version 3 of the License, or
 
 import sys
 from datetime import datetime
+import json
 
 from krop.qt import *
 from krop.config import PYQT6
@@ -49,6 +50,10 @@ def get_years_list() -> list:
 
     content = years_list_path.read_text(encoding="utf-8")
     return sorted({int(y) for y in content.splitlines() if y.strip()})
+
+def get_book_year(full_name):
+    stem = Path(full_name).stem
+    return int(stem[-4:])
 
 def output_timestamped_name():
     now = datetime.now()
@@ -358,6 +363,7 @@ class MainWindow(QMainWindow):
             self.ui.actionKrop.setEnabled(not self.viewer.isEmpty())
             self.ui.actionTrimMarginsAll.setEnabled(not self.viewer.isEmpty())
             self.updateControls()
+            self.ui.editLastFiscalYear.setValue(get_book_year(self.fileName) - 1)
 
     def slotOpenFile(self):
         fileName = QFileDialog.getOpenFileName(self,
@@ -411,6 +417,8 @@ class MainWindow(QMainWindow):
         inputFileName = self.fileName
         outputFileName = self.getScreenshotsPath() / Path(self.fileName).stem / output_timestamped_name()
         outputFileName.parent.mkdir(parents=True, exist_ok=True)
+
+        self.saveData(outputFileName.parent)
 
         pages = range(self.viewer.numPages())
 
@@ -488,6 +496,26 @@ class MainWindow(QMainWindow):
         except Exception as e:
             # PyQt equivalent of messagebox.showerror
             QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
+
+    def saveData(self, outputPath):
+
+        # Prepare data
+        selected_years = [year for year, chk in self.year_checkboxes.items() if chk.isChecked()]
+
+        data = {
+            "quality": self.ui.comboQuality.currentText(),
+            "first_fiscal_year": self.ui.editFirstFiscalYear.value(),
+            "last_fiscal_year": self.ui.editLastFiscalYear.value(),
+            "selected_fiscal_years": selected_years,
+            "ra": self.ui.editInitials.text()
+        }
+
+        # Save to JSON
+        json_path = outputPath / "dict.json"
+        with open(json_path, "w") as f:
+            json.dump(data, f, indent=4)
+
+        add_year_to_list(selected_years)
 
     def slotZoomIn(self):
         self.ui.actionFitInView.setChecked(False)
