@@ -544,6 +544,8 @@ class MainWindow(QMainWindow):
         self.updateControls()
 
     def slotPreviousPDF(self):
+        if self.viewer.isEmpty():
+            return
         current_path = Path(self.fileName).resolve()
         directory = current_path.parent
 
@@ -565,6 +567,8 @@ class MainWindow(QMainWindow):
         self.openFile(str(next_file))
 
     def slotNextPDF(self):
+        if self.viewer.isEmpty():
+            return
         current_path = Path(self.fileName).resolve()
         directory = current_path.parent
 
