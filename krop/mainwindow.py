@@ -34,9 +34,15 @@ from krop.vieweritem import ViewerItem
 from krop.pdfcropper import PdfFile, PyMuPdfImageExtractor, PdfEncryptedError
 from krop.autotrim import autoTrimMargins
 
-years_list_path = Path("years_list.txt")
+def get_data_folder():
+    home = Path.home()
+    data_dir = home / "Krop"
+
+    data_dir.mkdir(exist_ok=True)
+    return data_dir
 
 def add_year_to_list(years: list[str]):
+    years_list_path = get_data_folder() / "years_list.txt"
     years_list_path.touch(exist_ok=True)
 
     with years_list_path.open(mode="a", encoding="utf-8") as f:
@@ -44,6 +50,7 @@ def add_year_to_list(years: list[str]):
             f.write(f"{year}\n")
 
 def get_years_list() -> list:
+    years_list_path = get_data_folder() / "years_list.txt"
     if not years_list_path.exists():
         years_list_path.touch(exist_ok=True)
         return []
@@ -395,6 +402,7 @@ class MainWindow(QMainWindow):
 
     def slotClearList(self):
         self.clearListUI()
+        years_list_path = get_data_folder() / "years_list.txt"
         years_list_path.write_text("", encoding="utf-8")
 
     def slotOpenFile(self):
