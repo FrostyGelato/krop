@@ -34,35 +34,37 @@ from krop.vieweritem import ViewerItem
 from krop.pdfcropper import PdfFile, PyMuPdfImageExtractor, PdfEncryptedError
 from krop.autotrim import autoTrimMargins
 
-def get_data_folder():
-    home = Path.home()
-    data_dir = home / "Krop"
+APP_NAME = "Krop"
+FILE_NAME = "years_list.txt"
 
+def getYearsFilePath():
+    data_dir = Path.home() / APP_NAME
     data_dir.mkdir(exist_ok=True)
-    return data_dir
+    return data_dir / FILE_NAME
 
-def add_year_to_list(years: list[str]):
-    years_list_path = get_data_folder() / "years_list.txt"
-    years_list_path.touch(exist_ok=True)
+def addYearToList(years: list[str]):
+    file_path = getYearsFilePath()
 
-    with years_list_path.open(mode="a", encoding="utf-8") as f:
+    with file_path.open(mode="a", encoding="utf-8") as f:
         for year in years:
             f.write(f"{year}\n")
 
-def get_years_list() -> list:
-    years_list_path = get_data_folder() / "years_list.txt"
-    if not years_list_path.exists():
-        years_list_path.touch(exist_ok=True)
+def getYearsList() -> list:
+    file_path = getYearsFilePath()
+    if not file_path.exists():
         return []
 
-    content = years_list_path.read_text(encoding="utf-8")
-    return sorted({int(y) for y in content.splitlines() if y.strip()})
+    try:
+        content = file_path.read_text(encoding="utf-8")
+        return sorted({int(y) for y in content.splitlines() if y.strip()})
+    except (ValueError, OSError):
+        return []
 
-def get_book_year(full_name):
+def getBookYear(full_name):
     stem = Path(full_name).stem
     return int(stem[-4:])
 
-def output_timestamped_name():
+def getTimestampedName():
     now = datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H-%M-%S")
     return f"Image {dt_string}.png"
@@ -372,7 +374,7 @@ class MainWindow(QMainWindow):
             self.ui.actionKrop.setEnabled(not self.viewer.isEmpty())
             self.ui.actionTrimMarginsAll.setEnabled(not self.viewer.isEmpty())
             self.updateControls()
-            self.ui.editLastFiscalYear.setValue(get_book_year(self.fileName) - 1)
+            self.ui.editLastFiscalYear.setValue(getBookYear(self.fileName) - 1)
             self.refreshYearList()
 
     def clearListUI(self):
@@ -384,7 +386,7 @@ class MainWindow(QMainWindow):
     def refreshYearList(self):
         self.clearListUI()
 
-        years_list = get_years_list()
+        years_list = getYearsList()
         if not years_list:
             return
 
@@ -402,8 +404,8 @@ class MainWindow(QMainWindow):
 
     def slotClearList(self):
         self.clearListUI()
-        years_list_path = get_data_folder() / "years_list.txt"
-        years_list_path.write_text("", encoding="utf-8")
+        file_path = getYearsFilePath()
+        file_path.write_text("", encoding="utf-8")
 
     def slotOpenFile(self):
         fileName = QFileDialog.getOpenFileName(self,
@@ -455,7 +457,7 @@ class MainWindow(QMainWindow):
     def slotKrop(self):
         # file names
         inputFileName = self.fileName
-        outputFileName = self.getScreenshotsPath() / Path(self.fileName).stem / output_timestamped_name()
+        outputFileName = self.getScreenshotsPath() / Path(self.fileName).stem / getTimestampedName()
         outputFileName.parent.mkdir(parents=True, exist_ok=True)
 
         self.saveData(outputFileName.parent)
@@ -517,7 +519,7 @@ class MainWindow(QMainWindow):
                 start, end = end, start
 
             # Assuming get_years_list() is defined elsewhere in your logic
-            years_list = get_years_list()
+            years_list = getYearsList()
 
             for year in range(start, end + 1):
                 # Create the checkbox
@@ -555,7 +557,7 @@ class MainWindow(QMainWindow):
         with open(json_path, "w") as f:
             json.dump(data, f, indent=4)
 
-        add_year_to_list(selected_years)
+        addYearToList(selected_years)
 
     def slotZoomIn(self):
         self.ui.actionFitInView.setChecked(False)
