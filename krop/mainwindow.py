@@ -172,13 +172,6 @@ class MainWindow(QMainWindow):
 
         self.setAcceptDrops(True)
 
-        # these options are awkwardly named and possibly confusing, so they are
-        # not shown by default
-        self.ui.labelAllowedChanges.hide()
-        self.ui.editAllowedChanges.hide()
-        self.ui.labelSensitivity.hide()
-        self.ui.editSensitivity.hide()
-
         # self.ui.tabWidget.
 
         # http://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html
@@ -246,12 +239,6 @@ class MainWindow(QMainWindow):
         self.ui.actionTrimMarginsAll.triggered.connect(self.slotTrimMarginsAll)
         self.ui.documentView.customContextMenuRequested.connect(self.slotContextMenu)
         self.ui.editCurrentPage.textEdited.connect(self.slotCurrentPageEdited)
-        #  self.ui.editSelExceptions.editingFinished.connect(self.slotSelExceptionsChanged)
-        self.ui.editInitials.textEdited.connect(self.slotSelExceptionsEdited)
-        self.ui.comboSelAspectRatioType.currentIndexChanged.connect(self.slotSelAspectRatioTypeChanged)
-        self.ui.editSelAspectRatio.editingFinished.connect(self.slotSelAspectRatioChanged)
-        self.ui.comboDistributeDevice.currentIndexChanged.connect(self.slotDeviceTypeChanged)
-        self.ui.editDistributeAspectRatio.editingFinished.connect(self.slotDistributeAspectRatioChanged)
         self.ui.splitter.splitterMoved.connect(self.slotSplitterMoved)
 
         self.ui.buttonGenerateYearList.clicked.connect(self.slotGenerateYearList)
@@ -263,15 +250,6 @@ class MainWindow(QMainWindow):
 
         self.readSettings()
         self.refreshYearList()
-
-        # populate combobox with aspect ratio types
-        for t in self.selAspectRatioTypes:
-            self.ui.comboSelAspectRatioType.addItem(t.name)
-        self.ui.comboSelAspectRatioType.addItem("Custom")
-        # populate combobox with device types
-        for t in self.deviceTypes:
-            self.ui.comboDistributeDevice.addItem(t.name)
-        self.ui.comboDistributeDevice.addItem("Custom")
 
         self.ui.documentView.setScene(self.pdfScene)
         self.ui.documentView.setFocus()
@@ -298,20 +276,7 @@ class MainWindow(QMainWindow):
         return self.viewer.selections
 
     def currentSelectionUpdated(self):
-        sel = self.selections.currentSelection
-        if sel:
-            r = sel.boundingRect()
-            self.ui.groupCurrentSel.setEnabled(True)
-            index, s = sel.aspectRatioData
-            self.ui.comboSelAspectRatioType.setCurrentIndex(index)
-            self.ui.editSelAspectRatio.setText(s)
-            if index == 0:
-                w, h = int(r.width()), int(r.height())
-                self.ui.editSelAspectRatio.setText("{} : {}".format(w, h))
-        else:
-            self.ui.comboSelAspectRatioType.setCurrentIndex(0)
-            self.ui.editSelAspectRatio.setText("")
-            self.ui.groupCurrentSel.setEnabled(False)
+        pass
 
     def readSettings(self):
         settings = QSettings()
@@ -322,14 +287,6 @@ class MainWindow(QMainWindow):
         if splitter:
             self.ui.splitter.restoreState(splitter)
         self.ui.actionFitInView.setChecked(settings.value("Window/FitInView", "") == "true")
-
-        self.ui.checkTrimUseAllPages.setChecked(settings.value("Trim/UseAllPages", "") == "true")
-        self.ui.editPadding.setText(
-                settings.value("Trim/Padding", "2"))
-        self.ui.editAllowedChanges.setText(
-                settings.value("Trim/AllowedChanges", "0"))
-        self.ui.editSensitivity.setText(
-                settings.value("Trim/Sensitivity", "5"))
 
         self.ui.editInitials.setText(settings.value("Other/Initials", ""))
         self.ui.editFile.setText(settings.value("Save/Folder", ""))
@@ -343,15 +300,6 @@ class MainWindow(QMainWindow):
         settings.setValue("Window/Splitter", self.ui.splitter.saveState())
         settings.setValue("Window/FitInView", "true" if
                 self.ui.actionFitInView.isChecked() else "false")
-
-        settings.setValue("Trim/UseAllPages", "true" if
-                self.ui.checkTrimUseAllPages.isChecked() else "false")
-        settings.setValue("Trim/Padding",
-                self.ui.editPadding.text())
-        settings.setValue("Trim/AllowedChanges",
-                self.ui.editAllowedChanges.text())
-        settings.setValue("Trim/Sensitivity",
-                self.ui.editSensitivity.text())
 
         settings.setValue("Other/Initials", self.ui.editInitials.text())
         settings.setValue("Save/Folder", self.ui.editFile.text())
@@ -607,61 +555,6 @@ class MainWindow(QMainWindow):
             num = str(self.viewer.numPages())
         self.ui.editCurrentPage.setText(cur)
         self.ui.editMaxPage.setText(num)
-
-    def slotSelExceptionsChanged(self):
-        s = self.ui.editInitials.text()
-        pages = self.str2pages(s)
-        self.selections.selectionExceptions = pages
-
-    def slotSelExceptionsEdited(self, text):
-        try:
-            pages = self.str2pages(text)
-            self.selections.selectionExceptions = pages
-        except ValueError:
-            pass
-
-
-    def slotSelAspectRatioChanged(self):
-        sel = self.selections.currentSelection
-        if sel:
-            index = self.ui.comboSelAspectRatioType.currentIndex()
-            # index=0: flexible
-            # index=last: custom
-            s = self.ui.editSelAspectRatio.text()
-            sel.aspectRatioData = [index, s]
-
-    def slotSelAspectRatioTypeChanged(self, index):
-        sel = self.selections.currentSelection
-        t = self.selAspectRatioTypes.getType(index)
-        # index=0: flexible
-        # t=None: custom
-        ar = ""
-        if index == 0 or t is None:
-            if sel:
-                r = sel.boundingRect()
-                w, h = int(r.width()), int(r.height())
-                ar = "{} : {}".format(w, h)
-        elif t is not None:
-            ar = "{} : {}".format(t.width, t.height)
-        self.ui.editSelAspectRatio.setEnabled(t is None)
-        self.ui.editSelAspectRatio.setText(ar)
-        if sel:
-            s = self.ui.editSelAspectRatio.text()
-            sel.aspectRatioData = [index, s]
-
-
-    def distributeAspectRatioChanged(self, aspectRatio):
-        self.selections.distributeAspectRatio = aspectRatio
-
-    def slotDistributeAspectRatioChanged(self):
-        self.selections.distributeAspectRatio = aspectRatioFromStr(self.ui.editDistributeAspectRatio.text())
-
-    def slotDeviceTypeChanged(self, index):
-        t = self.deviceTypes.getType(index)
-        ar = t and "%s : %s" % (t.width, t.height) or "w : h"
-        self.ui.editDistributeAspectRatio.setEnabled(t is None)
-        self.ui.editDistributeAspectRatio.setText(ar)
-        self.slotDistributeAspectRatioChanged()
 
     def slotContextMenu(self, pos):
         if self.viewer.isEmpty():
