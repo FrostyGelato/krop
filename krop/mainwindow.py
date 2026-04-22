@@ -185,6 +185,8 @@ class MainWindow(QMainWindow):
         self.ui.actionNextPage.setIcon(QIcon.fromTheme('go-next'))
         self.ui.actionFirstPage.setIcon(QIcon.fromTheme('go-first'))
         self.ui.actionLastPage.setIcon(QIcon.fromTheme('go-last'))
+        self.ui.actionPreviousPDF.setIcon(QIcon.fromTheme('media-skip-backward'))
+        self.ui.actionNextPDF.setIcon(QIcon.fromTheme('media-skip-forward'))
         self.ui.actionTrimMargins.setIcon(QIcon.fromTheme('transform-crop'))
         self.ui.actionTrimMarginsAll.setIcon(QIcon.fromTheme('transform-crop'))
         # self.ui.actionTrimMarginsAll.setIcon(QIcon.fromTheme('select-rectangular'))
@@ -232,6 +234,8 @@ class MainWindow(QMainWindow):
         self.ui.actionNextPage.triggered.connect(self.slotNextPage)
         self.ui.actionFirstPage.triggered.connect(self.slotFirstPage)
         self.ui.actionLastPage.triggered.connect(self.slotLastPage)
+        self.ui.actionPreviousPDF.triggered.connect(self.slotPreviousPDF)
+        self.ui.actionNextPDF.triggered.connect(self.slotNextPDF)
         self.ui.actionDeleteSelection.triggered.connect(self.slotDeleteSelection)
         self.ui.actionNewSelection.triggered.connect(self.slotNewSelection)
         self.ui.actionNewSelectionGrid.triggered.connect(self.slotNewSelectionGrid)
@@ -538,6 +542,48 @@ class MainWindow(QMainWindow):
     def slotLastPage(self):
         self.viewer.lastPage()
         self.updateControls()
+
+    def slotPreviousPDF(self):
+        current_path = Path(self.fileName).resolve()
+        directory = current_path.parent
+
+        all_files = sorted(
+            [f for f in directory.iterdir() if f.suffix.lower() == '.pdf'],
+            key=lambda x: x.name.lower()
+        )
+
+        try:
+            current_index = all_files.index(current_path)
+        except ValueError:
+            # This handles cases where the file might have been moved or renamed
+            print("Current file not found in directory.")
+            return
+
+        next_index = (current_index - 1) % len(all_files)
+        next_file = all_files[next_index]
+
+        self.openFile(str(next_file))
+
+    def slotNextPDF(self):
+        current_path = Path(self.fileName).resolve()
+        directory = current_path.parent
+
+        all_files = sorted(
+            [f for f in directory.iterdir() if f.suffix.lower() == '.pdf'],
+            key=lambda x: x.name.lower()
+        )
+
+        try:
+            current_index = all_files.index(current_path)
+        except ValueError:
+            # This handles cases where the file might have been moved or renamed
+            print("Current file not found in directory.")
+            return
+
+        next_index = (current_index + 1) % len(all_files)
+        next_file = all_files[next_index]
+
+        self.openFile(str(next_file))
 
     def slotCurrentPageEdited(self, text):
         try:
