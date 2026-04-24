@@ -62,7 +62,11 @@ def getYearsList() -> list:
 
 def getBookYear(full_name):
     stem = Path(full_name).stem
-    return int(stem[-4:])
+    try:
+        book_year = int(stem[-4:])
+        return book_year
+    except ValueError:
+        return 1900
 
 def getTimestampedName():
     now = datetime.now()
@@ -554,10 +558,12 @@ class MainWindow(QMainWindow):
             key=lambda x: x.name.lower()
         )
 
+        if len(all_files) <= 1:
+            return
+
         try:
             current_index = all_files.index(current_path)
         except ValueError:
-            # This handles cases where the file might have been moved or renamed
             print("Current file not found in directory.")
             return
 
@@ -577,10 +583,12 @@ class MainWindow(QMainWindow):
             key=lambda x: x.name.lower()
         )
 
+        if len(all_files) <= 1:
+            return
+
         try:
             current_index = all_files.index(current_path)
         except ValueError:
-            # This handles cases where the file might have been moved or renamed
             print("Current file not found in directory.")
             return
 
