@@ -348,7 +348,6 @@ class Ui_MainWindow(object):
         self.buttonFirst.clicked.connect(self.actionFirstPage.trigger) # type: ignore
         self.buttonLast.clicked.connect(self.actionLastPage.trigger) # type: ignore
         self.buttonFileSelect.clicked.connect(self.actionSelectFile.trigger) # type: ignore
-        # self.sliderRotation.valueChanged.connect(lambda val: self.labelRotation.setText(f"Rotation ({val}°):"))
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):

@@ -248,6 +248,7 @@ class MainWindow(QMainWindow):
         self.ui.documentView.customContextMenuRequested.connect(self.slotContextMenu)
         self.ui.editCurrentPage.textEdited.connect(self.slotCurrentPageEdited)
         self.ui.splitter.splitterMoved.connect(self.slotSplitterMoved)
+        self.ui.sliderRotation.valueChanged.connect(self.slotRotateDocument)
 
         self.ui.buttonGenerateYearList.clicked.connect(self.slotGenerateYearList)
         self.ui.buttonResetYears.clicked.connect(self.slotClearList)
@@ -379,6 +380,10 @@ class MainWindow(QMainWindow):
 
         if dirPath:
             self.ui.editFile.setText(dirPath)
+
+    def slotRotateDocument(self, value):
+        print(f"Current rotation angle: {value} degrees")
+        self.viewer.setRotationAngle(value)
 
     def showWarning(self, title, text):
         # if krop is called with parameter --go, then the main window is never
