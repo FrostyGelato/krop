@@ -15,7 +15,6 @@ the Free Software Foundation; either version 3 of the License, or
 
 import sys
 
-from krop.config import PYQT6
 from krop.qt import *
 
 from krop.viewerselections import ViewerSelections
@@ -27,15 +26,29 @@ class AbstractViewerItem(QGraphicsItem):
     def __init__(self, mainwindow):
         QGraphicsItem.__init__(self)
         self.selections = ViewerSelections(self)
+        self._rotation = 0
         self.reset()
         self.mainwindow = mainwindow
 
     def reset(self):
         self._currentPageIndex = 0
+        self._rotation = 0
         self.brect = QRectF()
         self.irect = QRectF()
         self._images = []
         self.selections.deleteSelections()
+
+    def getRotation(self):
+        return self._rotation
+
+    def setRotationAngle(self, angle):
+        """Sets rotation and updates geometry to fit the new bounds."""
+        self._rotation = angle
+        # This triggers a recalculation of the bounding box
+        self.setCurrentPageIndex(self._currentPageIndex)
+        self.update()
+
+    rotationAngle = property(getRotation, setRotationAngle)
 
     def boundingRect(self):
         return self.brect
@@ -47,8 +60,27 @@ class AbstractViewerItem(QGraphicsItem):
         img = self.getImage(self.currentPageIndex)
         if img is None:
             return
-        painter.drawRect(self.irect.adjusted(-1,-1,1,1))
-        painter.drawImage(self.irect, img)
+
+        painter.save()
+
+        # 1. Move painter to the center of the image area
+        center = self.irect.center()
+        painter.translate(center)
+
+        # 2. Rotate the painter
+        painter.rotate(self._rotation)
+
+        draw_rect = QRectF(-self.irect.width()/2, -self.irect.height()/2,
+                           self.irect.width(), self.irect.height())
+
+        painter.drawImage(draw_rect, img)
+
+        # Optional: Draw a border around the image
+        painter.drawRect(draw_rect)
+
+        painter.restore()
+        # painter.drawRect(self.irect.adjusted(-1,-1,1,1))
+        # painter.drawImage(self.irect, img)
 
     def mapRectToImage(self, r):
         return r.translated(-self.irect.left(), -self.irect.top())
@@ -69,15 +101,37 @@ class AbstractViewerItem(QGraphicsItem):
         img = self.getImage(idx)
         if img is None:
             return
-        self.selections.updateSelectionVisibility()
 
         self.prepareGeometryChange()
-        rect = QRectF(img.rect())
-        # inflate slightly so that bounding rect will be visible
-        padding = 5
-        self.brect = QRectF(0,0,rect.width()+2*padding,rect.height()+2*padding)
-        self.irect = QRectF(padding,padding,rect.width(),rect.height())
+
+        # Original image dimensions
+        orig_width = img.width()
+        orig_height = img.height()
+        self.irect = QRectF(0, 0, orig_width, orig_height)
+
+        # Calculate how much space the rotated rectangle occupies
+        transform = QTransform().rotate(self._rotation)
+        rotated_rect = transform.mapRect(self.irect)
+
+        # Update bounding rect with padding to include the rotated corners
+        padding = 10
+        self.brect = rotated_rect.adjusted(-padding, -padding, padding, padding)
+
+        # Center the image rectangle within the new bounding rect
+        self.irect.moveCenter(self.brect.center())
+
         self.scene().setSceneRect(self.brect)
+        self.selections.updateSelectionVisibility()
+
+        # self.selections.updateSelectionVisibility()
+        #
+        # self.prepareGeometryChange()
+        # rect = QRectF(img.rect())
+        # # inflate slightly so that bounding rect will be visible
+        # padding = 5
+        # self.brect = QRectF(0,0,rect.width()+2*padding,rect.height()+2*padding)
+        # self.irect = QRectF(padding,padding,rect.width(),rect.height())
+        # self.scene().setSceneRect(self.brect)
 
     currentPageIndex = property(getCurrentPageIndex, setCurrentPageIndex)
 
@@ -145,6 +199,13 @@ class AbstractViewerItem(QGraphicsItem):
         crop_values = self.selections.cropValues(idx)
         r = self.pageGetRotation(idx)
         return [ adjustForOrientation(cv) for cv in crop_values ]
+
+    def getRotatedCropPoints(self, rect, angle):
+        """Example of how to transform crop coordinates by an arbitrary angle."""
+        transform = QTransform()
+        transform.rotate(angle)
+        # Map the crop rect through the same rotation matrix used for display
+        return transform.map(rect)
 
 class MuPDFViewerItem(AbstractViewerItem):
     """Viewer implementation which uses PyMuPDF to display PDF documents."""

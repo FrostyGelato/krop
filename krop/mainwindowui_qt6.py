@@ -95,6 +95,19 @@ class Ui_MainWindow(object):
         self.editInitials = QtWidgets.QLineEdit(parent=self.groupOtherFields)
         self.editInitials.setObjectName("editInitials")
         self.gridLayout_2.addWidget(self.editInitials, 3, 1, 1, 1)
+
+        # self.labelRotation = QtWidgets.QLabel(parent=self.groupOtherFields)
+        # self.labelRotation.setObjectName("labelRotation")
+        # self.labelRotation.setText("Rotation (0°):") # Initial text
+        # self.gridLayout_2.addWidget(self.labelRotation, 4, 0, 1, 1)
+        # self.sliderRotation = QtWidgets.QSlider(parent=self.groupOtherFields)
+        # self.sliderRotation.setOrientation(QtCore.Qt.Orientation.Horizontal)
+        # self.sliderRotation.setMinimum(-45)
+        # self.sliderRotation.setMaximum(45)
+        # self.sliderRotation.setProperty("value", 0)
+        # self.sliderRotation.setObjectName("sliderRotation")
+        # self.gridLayout_2.addWidget(self.sliderRotation, 4, 1, 1, 1)
+
         self.verticalLayout_4.addWidget(self.groupOtherFields)
 
         self.groupYearList = QtWidgets.QGroupBox(parent=self.tabBasic)
@@ -116,6 +129,27 @@ class Ui_MainWindow(object):
         self.verticalLayout_YearList.addWidget(self.buttonResetYears)
 
         self.verticalLayout_4.addWidget(self.groupYearList)
+
+        self.groupRotation = QtWidgets.QGroupBox(parent=self.tabBasic)
+        self.groupRotation.setObjectName("groupRotation")
+        self.groupRotation.setTitle("Rotation") # Sets the visual label
+
+        self.verticalLayout_Rotation = QtWidgets.QVBoxLayout(self.groupRotation)
+        self.verticalLayout_Rotation.setObjectName("verticalLayout_Rotation")
+
+        self.sliderRotation = QtWidgets.QSlider(parent=self.groupRotation)
+        self.sliderRotation.setOrientation(QtCore.Qt.Orientation.Horizontal)
+        self.sliderRotation.setMinimum(-45)
+        self.sliderRotation.setMaximum(45)
+        self.sliderRotation.setProperty("value", 0)
+        self.sliderRotation.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBelow)
+        self.sliderRotation.setTickInterval(5)
+        self.sliderRotation.setObjectName("sliderRotation")
+
+        self.verticalLayout_Rotation.addWidget(self.sliderRotation)
+
+        # Add the new group to the main vertical layout of tabBasic
+        self.verticalLayout_4.addWidget(self.groupRotation)
 
         self.tabWidget.addTab(self.tabBasic, "")
 
@@ -314,6 +348,7 @@ class Ui_MainWindow(object):
         self.buttonFirst.clicked.connect(self.actionFirstPage.trigger) # type: ignore
         self.buttonLast.clicked.connect(self.actionLastPage.trigger) # type: ignore
         self.buttonFileSelect.clicked.connect(self.actionSelectFile.trigger) # type: ignore
+        # self.sliderRotation.valueChanged.connect(lambda val: self.labelRotation.setText(f"Rotation ({val}°):"))
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
