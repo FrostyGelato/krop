@@ -331,6 +331,7 @@ class MainWindow(QMainWindow):
             self.ui.actionKrop.setEnabled(not self.viewer.isEmpty())
             self.ui.actionTrimMarginsAll.setEnabled(not self.viewer.isEmpty())
             self.updateControls()
+            self.ui.editFirstFiscalYear.setValue(getBookYear(self.fileName) - 2)
             self.ui.editLastFiscalYear.setValue(getBookYear(self.fileName) - 1)
             self.refreshYearList()
 
@@ -382,7 +383,7 @@ class MainWindow(QMainWindow):
             self.ui.editFile.setText(dirPath)
 
     def slotRotateDocument(self, value):
-        print(f"Current rotation angle: {value} degrees")
+        # print(f"Current rotation angle: {value} degrees")
         self.viewer.setRotationAngle(value)
 
     def showWarning(self, title, text):

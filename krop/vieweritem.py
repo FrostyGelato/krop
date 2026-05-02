@@ -144,6 +144,12 @@ class AbstractViewerItem(QGraphicsItem):
     def firstPage(self):
         self.currentPageIndex = 0
 
+    def secondPage(self):
+        if self.numPages() > 1:
+            self.currentPageIndex = 1
+        else:
+            self.currentPageIndex = 0
+
     def lastPage(self):
         self.currentPageIndex = self.numPages()-1
 
@@ -167,7 +173,7 @@ class AbstractViewerItem(QGraphicsItem):
         self.reset()
         self.doLoad(filename)
         self._images = [None for i in range(self.numPages())]
-        self.firstPage()
+        self.secondPage()
 
     # To be implemented in deriving classes:
 
