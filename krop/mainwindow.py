@@ -464,6 +464,8 @@ class MainWindow(QMainWindow):
 
         self.selections.deleteSelections()
 
+        self.refreshYearList()
+
     def slotGenerateYearList(self):
         while self.ui.layoutYearList.count() > 1: # > 1 to keep the spacer at the bottom
             item = self.ui.layoutYearList.takeAt(0)

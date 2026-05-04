@@ -63,6 +63,9 @@ class AbstractViewerItem(QGraphicsItem):
 
         painter.save()
 
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
         # 1. Move painter to the center of the image area
         center = self.irect.center()
         painter.translate(center)
@@ -237,7 +240,7 @@ class MuPDFViewerItem(AbstractViewerItem):
 
         if not image_list:
             # Fallback: if no image found, render the empty page
-            pix = page.get_pixmap(dpi=96)
+            pix = page.get_pixmap(dpi=150)
         else:
             # Get the first image on the page
             # image_list[0] = (xref, smask, width, height, bpc, colorspace, ...)
