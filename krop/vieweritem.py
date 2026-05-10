@@ -1,11 +1,3 @@
-# -*- coding: iso-8859-1 -*-
-
-"""
-Viewer for krop used to display PDF files.
-
-Copyright (C) 2010-2025 Armin Straub, http://arminstraub.com
-"""
-
 """
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -13,12 +5,12 @@ the Free Software Foundation; either version 3 of the License, or
 (at your option) any later version.
 """
 
+# brect is bounding rectangle, represents the total outer boundary of the graphics item.
+# irect is image rectangle, represents the internal rectangle where the actual PDF image content is drawn
+
 import sys
-
 from krop.qt import *
-
 from krop.viewerselections import ViewerSelections
-
 
 class AbstractViewerItem(QGraphicsItem):
     """Abstract class for displaying a PDF document and for allowing the user
@@ -26,14 +18,13 @@ class AbstractViewerItem(QGraphicsItem):
     def __init__(self, mainwindow):
         QGraphicsItem.__init__(self)
         self.selections = ViewerSelections(self)
-        self._rotation = 0
         self.reset()
         self.mainwindow = mainwindow
 
     def reset(self):
         self._currentPageIndex = 0
-        self._rotation = 0
-        self.brect = QRectF()
+        self._rotation = 0 # in degrees
+        self.brect = QRectF() # QRectF defines a rectangle using floating point precision
         self.irect = QRectF()
         self._images = []
         self.selections.deleteSelections()
@@ -42,19 +33,25 @@ class AbstractViewerItem(QGraphicsItem):
         return self._rotation
 
     def setRotationAngle(self, angle):
-        """Sets rotation and updates geometry to fit the new bounds."""
         self._rotation = angle
-        # This triggers a recalculation of the bounding box
-        self.setCurrentPageIndex(self._currentPageIndex)
+        self.prepareGeometryChange() # must be called before geometry change
+
+        img = self.getImage(self._currentPageIndex)
+        if img:
+            # Calculate the new size of the item after rotation
+            orig_rect = QRectF(0, 0, img.width(), img.height())
+            trans = QTransform().rotate(self._rotation)
+            rotated_rect = trans.mapRect(orig_rect) # returns a QRectF that is a copy of the input, mapped into the coordinate system defined by QTransform
+
+            self.brect = rotated_rect
+            self.irect = orig_rect # Keep track of original size
+
+            # Center the bounding box on the scene
+            self.scene().setSceneRect(self.brect) # scene rectangle is the bounding rectangle of the scene
+
         self.update()
 
     rotationAngle = property(getRotation, setRotationAngle)
-
-    def boundingRect(self):
-        return self.brect
-
-    def isPortrait(self):
-        return self.irect.width() <= self.irect.height()
 
     def paint(self, painter, option, widget):
         img = self.getImage(self.currentPageIndex)
@@ -62,34 +59,44 @@ class AbstractViewerItem(QGraphicsItem):
             return
 
         painter.save()
-
-        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        # 1. Move painter to the center of the image area
-        center = self.irect.center()
-        painter.translate(center)
-
-        # 2. Rotate the painter
-        painter.rotate(self._rotation)
+        painter.translate(self.brect.center()) # Translates the coordinate system by the given offset
+        painter.rotate(self._rotation) #  Rotate the painter
 
         draw_rect = QRectF(-self.irect.width()/2, -self.irect.height()/2,
                            self.irect.width(), self.irect.height())
 
-        painter.drawImage(draw_rect, img)
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        # Optional: Draw a border around the image
-        painter.drawRect(draw_rect)
+        painter.drawImage(draw_rect, img) # Draws given image into given rectangle
+        painter.restore() # Restores the current painter state, must follow save()
 
-        painter.restore()
-        # painter.drawRect(self.irect.adjusted(-1,-1,1,1))
-        # painter.drawImage(self.irect, img)
+    def mapRectToImage(self, rect):
+        # Create a transform that mimics the paint() logic
+        # Start with the transformation used in paint
+        t = QTransform()
+        t.translate(self.brect.center().x(), self.brect.center().y())
+        t.rotate(self._rotation)
+        t.translate(-self.irect.width()/2, -self.irect.height()/2)
 
-    def mapRectToImage(self, r):
-        return r.translated(-self.irect.left(), -self.irect.top())
+        # Invert it to go from 'Screen/Scene' -> 'Raw Image Pixels'
+        inv, success = t.inverted()
+        if not success:
+            return rect
+
+        # Map the selection polygon (since a rotated rect is a polygon)
+        # and get its bounding box in image pixel space
+        poly = inv.mapToPolygon(rect.toRect()) # toRect() turn QRectF to QRect
+        return poly.boundingRect()
 
     def mapRectFromImage(self, r):
         return r.translated(self.irect.left(), self.irect.top())
+
+    def boundingRect(self):
+        return self.brect
+
+    def isPortrait(self):
+        return self.irect.width() <= self.irect.height()
 
     def getCurrentPageIndex(self):
         return self._currentPageIndex
@@ -125,16 +132,6 @@ class AbstractViewerItem(QGraphicsItem):
 
         self.scene().setSceneRect(self.brect)
         self.selections.updateSelectionVisibility()
-
-        # self.selections.updateSelectionVisibility()
-        #
-        # self.prepareGeometryChange()
-        # rect = QRectF(img.rect())
-        # # inflate slightly so that bounding rect will be visible
-        # padding = 5
-        # self.brect = QRectF(0,0,rect.width()+2*padding,rect.height()+2*padding)
-        # self.irect = QRectF(padding,padding,rect.width(),rect.height())
-        # self.scene().setSceneRect(self.brect)
 
     currentPageIndex = property(getCurrentPageIndex, setCurrentPageIndex)
 

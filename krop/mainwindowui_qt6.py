@@ -96,18 +96,6 @@ class Ui_MainWindow(object):
         self.editInitials.setObjectName("editInitials")
         self.gridLayout_2.addWidget(self.editInitials, 3, 1, 1, 1)
 
-        # self.labelRotation = QtWidgets.QLabel(parent=self.groupOtherFields)
-        # self.labelRotation.setObjectName("labelRotation")
-        # self.labelRotation.setText("Rotation (0°):") # Initial text
-        # self.gridLayout_2.addWidget(self.labelRotation, 4, 0, 1, 1)
-        # self.sliderRotation = QtWidgets.QSlider(parent=self.groupOtherFields)
-        # self.sliderRotation.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        # self.sliderRotation.setMinimum(-45)
-        # self.sliderRotation.setMaximum(45)
-        # self.sliderRotation.setProperty("value", 0)
-        # self.sliderRotation.setObjectName("sliderRotation")
-        # self.gridLayout_2.addWidget(self.sliderRotation, 4, 1, 1, 1)
-
         self.verticalLayout_4.addWidget(self.groupOtherFields)
 
         self.groupYearList = QtWidgets.QGroupBox(parent=self.tabBasic)
